@@ -3,32 +3,20 @@
 	<style>
 	.panel {
 		border:1px solid black;
-		height:100%;
+		height:auto;
 		margin-left:2px;
 		float:left;
 	}
 	.sliderframe {
 		position:absolute;
-		/*width:730px;*/
-		height:300px;
 	}
 	
-	.panel-hidden {
-	display:none;
-	}
 	.slider {
-		/*width:314px;*/
 		width:100%;
-		height:300px;
-		/*border:1px solid grey;*/
-		margin-top:50px;
 		/*display: flex; /*added*/
 		flex-direction: row;
   		overflow:hidden;
   		position:relative;
-  		/*left:50%;
-  		/*margin-left:-300px;*/
-  		border:1px solid grey;
 	}
 	/* formula for margins is: if n number of visible elements then total margins will be (nX2 + 1).
 	* In addition the number of borders will be nx2.
@@ -85,47 +73,61 @@
 </body>
 <script>
 var start = null;
+var index = 0;
+var setupData;
 	$(document).ready(()=>{
-			let setupData = derivePanelSize();
-			$('#sldr .sliderframe .panel').css('width', setupData.panelWidth);
-			var index = 0;
-			let slider =  $('#sldr .sliderframe');
-			setupData['slider']=slider;
-			setupData['index']=index;			
-		
-			$('#left').on('click', ()=>{
-				if(setupData.index > -(setupData.size - setupData.visible)) {
-					--setupData.index;
-					slide(setupData);
-				}
-			});
-		
-			$('#right').on('click', ()=>{
-				if(setupData.index < 0) {
-					++setupData.index;
-					slide(setupData);
-				}
-			});
-			let meta = calculateContainers(setupData);
-			$('#sldr').css('width', meta.vWidth);
-			$('#sldr .sliderframe').css('width', meta.cWidth);			
+		setupData = initialize();
+		window.onresize = function(event) {
+			console.log('initialize on resize');
+			setupData = initialize();
+		};
+		$('#left').on('click', ()=>{
+			if(index > -(setupData.size - setupData.visible)) {
+				--index;
+				slideLeft();
+			}
+		});
+	
+		$('#right').on('click', ()=>{
+			if(index < 0) {
+				++index;
+				slideRight();
+			}
+		});		
 		
 	});
+	
+	function initialize() {
+		setupData = derivePanelSize();
+		$('#sldr .sliderframe .panel').css('width', setupData.panelWidth);
+		let sliderH = Math.ceil(parseSize(window.getComputedStyle(document.querySelector('#sldr .sliderframe .panel')).height));
+		$('#sldr').css('height', sliderH);
 
-	function calculateContainers(config) {
-		let containerWidth = config.panelWidth*config.size + (config.size + 1)*config.margin + 2*config.size*config.borderWidth;
-		//let visibleWidth =  config.panelWidth*config.visible + (config.visible + 1)*config.margin + 2*config.visible*config.borderWidth;
-		let visibleWidth =  config.panelWidth*config.visible + (config.visible)*config.margin + (config.visible)*config.borderWidth;
-		return {"cWidth":containerWidth, "vWidth":visibleWidth};
+		let slider =  $('#sldr .sliderframe');
+		setupData['slider']=slider;		
+	
+
+		let cWidth = calculateContainers();
+		$('#sldr .sliderframe').css('width', cWidth);
+		slider.css('left', index*(setupData.panelWidth + setupData.margin))
+		return setupData;
 	}
 
+	function calculateContainers() {
+		let containerWidth = setupData.panelWidth*setupData.size + (setupData.size + 1)*setupData.margin + 2*setupData.size*setupData.borderWidth;
+		return containerWidth
+	}
+
+	function slideLeft() {
+		//let moveBy = panelWidth + border*2 + margin;
+		let moveBy = setupData.panelWidth + setupData.margin;
+		setupData.slider.animate({left:"-=" + moveBy}, 1000);
+	}
 	
-	function slide(animMeta) {
-		/*the calculation for the amount of shift is based on the margin value between the cards as well
-		as the left and right border widths of the cards. These values will be calcuated runtime by the code in the future
-		window.getComputedStyle is key command for this.*/		
-		let pos = animMeta.index*(animMeta.panelWidth + animMeta.margin);
-		animMeta.slider.velocity({left:pos}, {duration:200});
+	function slideRight(slider, panelWidth, border, margin) {
+		//let moveBy = panelWidth + border*2 + margin;
+		let moveBy = setupData.panelWidth + setupData.margin;
+		setupData.slider.animate({left:"+=" + moveBy}, 1000);
 	}	
 	
 	function parseSize(dim) {
@@ -135,11 +137,9 @@ var start = null;
 	}
 	
 	function setup() {
-
 		//get the top container and get all its attributes.
 		let panel = document.querySelector('#sldr .sliderframe .panel');
 		let panelStyle = window.getComputedStyle(panel);
-		let panelWidth = parseSize(panelStyle.width);
 		//count the number of panels.
 		let container = document.querySelector('#sldr .sliderframe');
 
@@ -154,13 +154,13 @@ var start = null;
 		let margin = parseSize(panelStyle.getPropertyValue('margin-left'));
 		let visible = 3;
 		
-		return {"panelWidth":panelWidth, "size":size, "borderWidth":borderWidth,
+		return {"size":size, "borderWidth":borderWidth,
 			"margin":margin, "visible":visible}
 	}
 	
 	function derivePanelSize() {
 		let setupData = setup();
-		let panelMinSize = 100;
+		let panelMinSize = 50;
 		let maxVisible = 3;
 		let minVisible = 1;
 		let border = setupData.borderWidth;
@@ -168,6 +168,7 @@ var start = null;
 		let visible = maxVisible;
 		//get the current width of the visible div.
 		let vContainerW = Math.floor(parseSize(window.getComputedStyle(document.querySelector('#sldr')).width));
+		console.log(vContainerW);
 		//based upon the visible width, calculate the panel size w.r.t minimum panel size and max visible
 		let done = false;
 		let pw = 0;
@@ -190,10 +191,11 @@ var start = null;
 	
 	/*
 	LEGACY code below.
-	function slideLeft(slider, panelWidth, border, margin) {
-	let moveBy = panelWidth + border*2 + margin;
-	$(slider).animate({left:"-=" + moveBy}, 1000);
-}
+	function slide() {
+	
+		let pos = index*(setupData.panelWidth + setupData.margin);
+		setupData.slider.velocity({left:pos}, {duration:200});
+	}
 	function animhorizontalSlide(element, end) {
 		let now = new Date().getTime();
 		let dt = now - (start||now);
