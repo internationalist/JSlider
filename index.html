@@ -1,0 +1,225 @@
+<html>
+<head>
+	<style>
+	.panel {
+		border:1px solid black;
+		height:100%;
+		margin-left:2px;
+		float:left;
+	}
+	.sliderframe {
+		position:absolute;
+		/*width:730px;*/
+		height:300px;
+	}
+	
+	.panel-hidden {
+	display:none;
+	}
+	.slider {
+		/*width:314px;*/
+		width:100%;
+		height:300px;
+		/*border:1px solid grey;*/
+		margin-top:50px;
+		/*display: flex; /*added*/
+		flex-direction: row;
+  		overflow:hidden;
+  		position:relative;
+  		/*left:50%;
+  		/*margin-left:-300px;*/
+  		border:1px solid grey;
+	}
+	/* formula for margins is: if n number of visible elements then total margins will be (nX2 + 1).
+	* In addition the number of borders will be nx2.
+	* Thus the formula: containing element width = panelWidth*n + (n +1)*m + 2n*b Here m is the margin in px, b is the border width in px.
+	 E.g. If length of margins is 2px, border: 1px and visible elements is 4 and element width = 100, 
+	 container width = 4*100 + (4+1)*2 + 2*4*1 = 419  */
+	</style>
+	<script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="js/velocity.min.js"></script>
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>	
+	<link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+        	<div class="col">
+				<div style="display:flex;border:1px solid grey;width:100%;">
+					<div>Hi</div>
+					<div id = "sldr" class="slider">
+						<div class="sliderframe">
+							<div id="panel1" class="panel">
+								<img style="max-width: 100%;max-height: 100%;display:block;margin:auto;" src="img/01_FC_2016_04_06_11_43_44.jpg"/>
+							</div>
+							<div id="panel2" class="panel">
+								<img style="max-width: 100%;max-height: 100%;display:block;margin:auto;" src="img/01_FC_001.jpg"/>
+							</div>
+							<div id="panel3" class="panel">
+								<img style="max-width: 100%;max-height: 100%;display:block;margin:auto;" src="img/01_FC_2016_03_05_14_32_56_001.jpg"/>
+							</div>
+							<div id="panel4" class="panel">
+								<img style="max-width: 100%;max-height: 100%;display:block;margin:auto;" src="img/01_FC_Aadim_Manush-000.jpg"/>
+							</div>
+							<div id="panel5" class="panel">
+								<img style="max-width: 100%;max-height: 100%;display:block;margin:auto;" src="img/01_FC_out-00.jpg"/>
+							</div>
+							<div id="panel5" class="panel">
+								<img style="max-width: 100%;max-height: 100%;display:block;margin:auto;" src="img/01_FC_2016_02_11_15_35_53.jpg"/>
+							</div>
+							<div id="panel5" class="panel">
+								<img style="max-width: 100%;max-height: 100%;display:block;margin:auto;" src="img/01_FC_2016_03_19_17_07_18_001.jpg"/>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>            
+	<input id="left" type="button" value="Left"></input>
+	<input id="right" type="button" value="right"></input>	
+
+
+</body>
+<script>
+var start = null;
+	$(document).ready(()=>{
+			let setupData = derivePanelSize();
+			$('#sldr .sliderframe .panel').css('width', setupData.panelWidth);
+			var index = 0;
+			let slider =  $('#sldr .sliderframe');
+			setupData['slider']=slider;
+			setupData['index']=index;			
+		
+			$('#left').on('click', ()=>{
+				if(setupData.index > -(setupData.size - setupData.visible)) {
+					--setupData.index;
+					slide(setupData);
+				}
+			});
+		
+			$('#right').on('click', ()=>{
+				if(setupData.index < 0) {
+					++setupData.index;
+					slide(setupData);
+				}
+			});
+			let meta = calculateContainers(setupData);
+			$('#sldr').css('width', meta.vWidth);
+			$('#sldr .sliderframe').css('width', meta.cWidth);			
+		
+	});
+
+	function calculateContainers(config) {
+		let containerWidth = config.panelWidth*config.size + (config.size + 1)*config.margin + 2*config.size*config.borderWidth;
+		//let visibleWidth =  config.panelWidth*config.visible + (config.visible + 1)*config.margin + 2*config.visible*config.borderWidth;
+		let visibleWidth =  config.panelWidth*config.visible + (config.visible)*config.margin + (config.visible)*config.borderWidth;
+		return {"cWidth":containerWidth, "vWidth":visibleWidth};
+	}
+
+	
+	function slide(animMeta) {
+		/*the calculation for the amount of shift is based on the margin value between the cards as well
+		as the left and right border widths of the cards. These values will be calcuated runtime by the code in the future
+		window.getComputedStyle is key command for this.*/		
+		let pos = animMeta.index*(animMeta.panelWidth + animMeta.margin);
+		animMeta.slider.velocity({left:pos}, {duration:200});
+	}	
+	
+	function parseSize(dim) {
+		dim = new String(dim);
+		dimNum = dim.substring(0,dim.indexOf("px"));
+		return Number(dimNum);
+	}
+	
+	function setup() {
+
+		//get the top container and get all its attributes.
+		let panel = document.querySelector('#sldr .sliderframe .panel');
+		let panelStyle = window.getComputedStyle(panel);
+		let panelWidth = parseSize(panelStyle.width);
+		//count the number of panels.
+		let container = document.querySelector('#sldr .sliderframe');
+
+		let panels = container.childNodes;
+		let size = 0;
+		for(let  i = 0; i < panels.length; i++) {
+			if(panels[i].nodeType==1) {
+				++size;		
+			}
+		}
+		let borderWidth = parseSize(panelStyle.getPropertyValue('border-width'));
+		let margin = parseSize(panelStyle.getPropertyValue('margin-left'));
+		let visible = 3;
+		
+		return {"panelWidth":panelWidth, "size":size, "borderWidth":borderWidth,
+			"margin":margin, "visible":visible}
+	}
+	
+	function derivePanelSize() {
+		let setupData = setup();
+		let panelMinSize = 100;
+		let maxVisible = 3;
+		let minVisible = 1;
+		let border = setupData.borderWidth;
+		let margin = setupData.margin;
+		let visible = maxVisible;
+		//get the current width of the visible div.
+		let vContainerW = Math.floor(parseSize(window.getComputedStyle(document.querySelector('#sldr')).width));
+		//based upon the visible width, calculate the panel size w.r.t minimum panel size and max visible
+		let done = false;
+		let pw = 0;
+		while(!done && visible > 0) {
+				pw = (vContainerW - (visible + 1)*margin)/visible;
+				if(pw >= panelMinSize + border*2) {
+					done = true;
+				} else {
+					--visible;
+				}
+		}
+		if(visible == 0) {
+			visible = minVisible;
+		}
+
+		setupData['panelWidth'] = Math.floor(pw);
+		setupData['visible'] = visible;	
+		return setupData;
+	}
+	
+	/*
+	LEGACY code below.
+	function slideLeft(slider, panelWidth, border, margin) {
+	let moveBy = panelWidth + border*2 + margin;
+	$(slider).animate({left:"-=" + moveBy}, 1000);
+}
+	function animhorizontalSlide(element, end) {
+		let now = new Date().getTime();
+		let dt = now - (start||now);
+		start = now;
+		let currentLeft = parseSize(element.style.left);
+		console.log("dt " + dt + " left:" + currentLeft);		
+		let progress;
+		if(currentLeft > end) {
+			progress = currentLeft - dt;
+			progress = Math.max(progress, end);
+		} else {
+			progress = currentLeft + dt;
+			progress = Math.min(progress, end);
+
+		}
+		element.style.left=progress + 'px';
+		
+		if(progress != end) {
+			window.requestAnimationFrame((timestamp)=>{
+				animhorizontalSlide(element, end)
+			});
+		} else {
+			start = null;
+		}
+	}*/	
+
+</script>
+</html>
+

@@ -1,0 +1,7 @@
+{
+  "name": "2dcanvas",
+  "main": "index.html",
+    "window": {
+    "toolbar": true
+  }
+}
