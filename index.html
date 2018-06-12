@@ -27,7 +27,9 @@
 	<script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
 	<script type="text/javascript" src="js/velocity.min.js"></script>
     <script src="js/jquery.min.js"></script>
-    <script src="js/bootstrap.min.js"></script>	
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/TweenLite.min.js"></script>
+    
 	<link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/font-awesome.min.css">
 </head>
@@ -75,37 +77,59 @@
 var start = null;
 var index = 0;
 var setupData;
+var resizeTimer;
+var mousedrag = false;
+var mouseXStart;
 	$(document).ready(()=>{
 		setupData = initialize();
-		window.onresize = function(event) {
-			console.log('initialize on resize');
-			setupData = initialize();
+		window.onresize = (event)=> {
+			if(!resizeTimer) {
+		  		//clearTimeout(resizeTimer);
+		  		resizeTimer = setTimeout(()=>{
+		  			resizeTimer = null;
+		  			console.log('initialize on resize');
+					setupData = initialize();
+		  		}, 300);
+			}
 		};
 		$('#left').on('click', ()=>{
-			if(index > -(setupData.size - setupData.visible)) {
-				--index;
-				slideLeft();
-			}
+			//if(index > -(setupData.size - setupData.visible)) {
+				//--index;
+				slideLeftByPanel();
+			//}
 		});
 	
 		$('#right').on('click', ()=>{
-			if(index < 0) {
-				++index;
-				slideRight();
-			}
-		});		
+			//if(index < 0) {
+				//++index;
+				slideRightByPanel();
+			//}
+		});
 		
+		let slide = document.querySelector('#sldr');
+		slide.addEventListener('mousedown', (event)=>{
+			event.preventDefault()
+			mousedrag = true;
+			mouseXStart = event.clientX;
+				
+		}, false);
+		slide.addEventListener('mousemove', (evt)=>{
+			if(mousedrag) {
+				slideOnDrag((evt.clientX - mouseXStart)/10);
+			}
+		}, false);
+		slide.addEventListener('mouseup', ()=>{
+			mousedrag = false;}, false);
 	});
 	
 	function initialize() {
 		setupData = derivePanelSize();
 		$('#sldr .sliderframe .panel').css('width', setupData.panelWidth);
-		let sliderH = Math.ceil(parseSize(window.getComputedStyle(document.querySelector('#sldr .sliderframe .panel')).height));
+		let sliderH = Math.ceil(getCSSProperty(document.querySelector('#sldr .sliderframe .panel'), 'height'));
 		$('#sldr').css('height', sliderH);
 
 		let slider =  $('#sldr .sliderframe');
 		setupData['slider']=slider;		
-	
 
 		let cWidth = calculateContainers();
 		$('#sldr .sliderframe').css('width', cWidth);
@@ -118,22 +142,54 @@ var setupData;
 		return containerWidth
 	}
 
-	function slideLeft() {
-		//let moveBy = panelWidth + border*2 + margin;
-		let moveBy = setupData.panelWidth + setupData.margin;
-		setupData.slider.animate({left:"-=" + moveBy}, 1000);
+	function slideLeftByPanel() {
+		let moveBy = setupData.panelWidth + setupData.margin - getSlideOffset();
+		if(getCSSProperty(document.querySelector('#sldr .sliderframe'), 'left') > setupData.minLeft) {		
+			setupData.slider.animate({left:"-=" + moveBy}, 1000);
+		}
 	}
 	
-	function slideRight(slider, panelWidth, border, margin) {
-		//let moveBy = panelWidth + border*2 + margin;
-		let moveBy = setupData.panelWidth + setupData.margin;
-		setupData.slider.animate({left:"+=" + moveBy}, 1000);
+	function slideRightByPanel(slider, panelWidth, border, margin) {
+		let moveBy = setupData.panelWidth + setupData.margin - getSlideOffset();
+		if(getCSSProperty(document.querySelector('#sldr .sliderframe'), 'left') < setupData.maxLeft) {
+			setupData.slider.animate({left:"+=" + moveBy}, 1000);
+		}
 	}	
+	
+	function getSlideOffset() {
+		let currentPos = getCSSProperty(document.querySelector('#sldr .sliderframe'), 'left');
+		let panelSize = setupData.panelWidth + setupData.margin;
+		return Math.abs(currentPos%panelSize);		
+	}
+	
+	function slideOnDrag(slideAmt) {
+		let currentLeft = getCSSProperty(document.querySelector('#sldr .sliderframe'), 'left');
+		currentLeft += slideAmt;
+		let running = false;
+
+		if(!running && currentLeft < setupData.maxLeft && currentLeft >= setupData.minLeft) {
+			running = true;
+			window.requestAnimationFrame(()=>{
+				setupData.slider.css('left', currentLeft);
+				running = false;});
+		}
+	}
+	
 	
 	function parseSize(dim) {
 		dim = new String(dim);
 		dimNum = dim.substring(0,dim.indexOf("px"));
 		return Number(dimNum);
+	}
+	
+	function getCSSProperty(elem, p) {
+		let elemStyle = window.getComputedStyle(elem);
+		let cssProp = elemStyle.getPropertyValue(p);
+		if(cssProp.indexOf("px") >= 0) {
+			return parseSize(cssProp);
+		} else {
+			return cssProp;
+		}
 	}
 	
 	function setup() {
@@ -150,8 +206,8 @@ var setupData;
 				++size;		
 			}
 		}
-		let borderWidth = parseSize(panelStyle.getPropertyValue('border-width'));
-		let margin = parseSize(panelStyle.getPropertyValue('margin-left'));
+		let borderWidth = getCSSProperty(panel, 'border-width');
+		let margin = getCSSProperty(panel, 'margin-left');
 		let visible = 3;
 		
 		return {"size":size, "borderWidth":borderWidth,
@@ -167,7 +223,7 @@ var setupData;
 		let margin = setupData.margin;
 		let visible = maxVisible;
 		//get the current width of the visible div.
-		let vContainerW = Math.floor(parseSize(window.getComputedStyle(document.querySelector('#sldr')).width));
+		let vContainerW = Math.floor(getCSSProperty(document.querySelector('#sldr'), 'width'));
 		console.log(vContainerW);
 		//based upon the visible width, calculate the panel size w.r.t minimum panel size and max visible
 		let done = false;
@@ -185,7 +241,9 @@ var setupData;
 		}
 
 		setupData['panelWidth'] = Math.floor(pw);
-		setupData['visible'] = visible;	
+		setupData['visible'] = visible;
+		setupData['maxLeft'] = 0;
+		setupData['minLeft'] = -1*(setupData.panelWidth + setupData.margin)*(setupData.size - setupData.visible);
 		return setupData;
 	}
 	
