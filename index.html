@@ -2,9 +2,8 @@
 <head>
 	<style>
 	.panel {
-		border:1px solid black;
 		height:auto;
-		margin-left:2px;
+		margin-left:5px;
 		float:left;
 	}
 	.sliderframe {
@@ -17,6 +16,7 @@
 		flex-direction: row;
   		overflow:hidden;
   		position:relative;
+  		/*left:10px;*/
 	}
 	/* formula for margins is: if n number of visible elements then total margins will be (nX2 + 1).
 	* In addition the number of borders will be nx2.
@@ -29,16 +29,15 @@
     <script src="js/jquery.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script src="js/TweenLite.min.js"></script>
-    
 	<link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/font-awesome.min.css">
 </head>
 <body>
-    <div class="container">
+    <div class="container" style="width:100%;">
         <div class="row">
         	<div class="col">
-				<div style="display:flex;border:1px solid grey;width:100%;">
-					<div>Hi</div>
+				<div style="display:flex;width:100%;">
+					<div id="sldr_left" style="z-index:5000;position:relative;"><span style="position:absolute;top:50%;background-color:white;"><i class="icon-chevron-left icon-4" style="font-size:1.5em;vertical-align:middle"></i></span></div>
 					<div id = "sldr" class="slider">
 						<div class="sliderframe">
 							<div id="panel1" class="panel">
@@ -64,12 +63,11 @@
 							</div>
 						</div>
 					</div>
+					<div id="sldr_right" style="z-index:5000;position:relative;left:-16px;"><div style="position:absolute;top:50%;background-color:white;"><i class="icon-chevron-right icon-4" style="font-size:1.5em;"></i></div></div>
 				</div>
 			</div>
 		</div>
 	</div>            
-	<input id="left" type="button" value="Left"></input>
-	<input id="right" type="button" value="right"></input>	
 
 
 </body>
@@ -84,26 +82,18 @@ var mouseXStart;
 		setupData = initialize();
 		window.onresize = (event)=> {
 			if(!resizeTimer) {
-		  		//clearTimeout(resizeTimer);
 		  		resizeTimer = setTimeout(()=>{
 		  			resizeTimer = null;
-		  			console.log('initialize on resize');
 					setupData = initialize();
 		  		}, 300);
 			}
 		};
-		$('#left').on('click', ()=>{
-			//if(index > -(setupData.size - setupData.visible)) {
-				//--index;
-				slideLeftByPanel();
-			//}
-		});
+		$('#sldr_left').on('click', ()=>{
+			slideRightByPanel();			
+		});		
 	
-		$('#right').on('click', ()=>{
-			//if(index < 0) {
-				//++index;
-				slideRightByPanel();
-			//}
+		$('#sldr_right').on('click', ()=>{
+			slideLeftByPanel();
 		});
 		
 		let slide = document.querySelector('#sldr');
@@ -144,15 +134,27 @@ var mouseXStart;
 
 	function slideLeftByPanel() {
 		let moveBy = setupData.panelWidth + setupData.margin - getSlideOffset();
-		if(getCSSProperty(document.querySelector('#sldr .sliderframe'), 'left') > setupData.minLeft) {		
-			setupData.slider.animate({left:"-=" + moveBy}, 1000);
+		let currentLeft = getCSSProperty(document.querySelector('#sldr .sliderframe'), 'left');		
+		if(currentLeft > setupData.minLeft) {
+			let moveTo = currentLeft - moveBy;
+			if(moveTo < setupData.minLeft) {
+				moveTo = setupData.minLeft;
+			}
+			index = Math.round(moveTo/setupData.panelWidth);
+			setupData.slider.animate({left:moveTo}, 1000);
 		}
 	}
 	
 	function slideRightByPanel(slider, panelWidth, border, margin) {
 		let moveBy = setupData.panelWidth + setupData.margin - getSlideOffset();
-		if(getCSSProperty(document.querySelector('#sldr .sliderframe'), 'left') < setupData.maxLeft) {
-			setupData.slider.animate({left:"+=" + moveBy}, 1000);
+		let currentLeft = getCSSProperty(document.querySelector('#sldr .sliderframe'), 'left');
+		if(currentLeft < setupData.maxLeft) {
+			let moveTo = currentLeft + moveBy;
+			if(moveTo > setupData.maxLeft) {
+				moveTo = setupData.maxLeft;
+			}
+			index = Math.round(moveTo/setupData.panelWidth);
+			setupData.slider.animate({left:moveTo}, 1000);
 		}
 	}	
 	
@@ -171,6 +173,7 @@ var mouseXStart;
 			running = true;
 			window.requestAnimationFrame(()=>{
 				setupData.slider.css('left', currentLeft);
+				index = Math.round(currentLeft/setupData.panelWidth);
 				running = false;});
 		}
 	}
@@ -208,16 +211,15 @@ var mouseXStart;
 		}
 		let borderWidth = getCSSProperty(panel, 'border-width');
 		let margin = getCSSProperty(panel, 'margin-left');
-		let visible = 3;
 		
 		return {"size":size, "borderWidth":borderWidth,
-			"margin":margin, "visible":visible}
+			"margin":margin}
 	}
 	
 	function derivePanelSize() {
 		let setupData = setup();
-		let panelMinSize = 50;
-		let maxVisible = 3;
+		let panelMinSize = 80;
+		let maxVisible = 5;
 		let minVisible = 1;
 		let border = setupData.borderWidth;
 		let margin = setupData.margin;
@@ -230,6 +232,7 @@ var mouseXStart;
 		let pw = 0;
 		while(!done && visible > 0) {
 				pw = (vContainerW - (visible + 1)*margin)/visible;
+				console.log("pw " + pw);
 				if(pw >= panelMinSize + border*2) {
 					done = true;
 				} else {
