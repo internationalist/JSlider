@@ -1,0 +1,19 @@
+<div class="slider_container">
+	<div id="{{id}}_left" style="z-index:5000;position:relative;"><span class="sliderIcon"><i class="icon-chevron-left icon-4"></i></span></div>
+	<div id = "{{id}}" class="slider">
+		<div class="sliderframe">
+			{{#panels}}						
+				<div class="panel">
+					<figure>
+						<img class="panelimg" src="{{&src}}"/>
+						<figcaption>
+							<div style="font-weight:bold;">{{desc}}</div>
+							<div style="display:flex;justify-content:center;"><button style="background-color:teal;color:white;">Read</button></div>
+						</figcaption>
+					</figure>
+				</div>
+			{{/panels}}
+		</div>
+	</div>
+	<div id="sldr_right" style="z-index:5000;position:relative;left:-16px;"><div class="sliderIcon"><i class="icon-chevron-right icon-4"></i></div></div>
+</div>

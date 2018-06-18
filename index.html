@@ -1,288 +1,99 @@
 <html>
 <head>
-	<style>
-	.panel {
-		height:auto;
-		margin-left:5px;
-		float:left;
-	}
-	.sliderframe {
-		position:absolute;
-	}
-	
-	.slider {
-		width:100%;
-		/*display: flex; /*added*/
-		flex-direction: row;
-  		overflow:hidden;
-  		position:relative;
-  		/*left:10px;*/
-	}
-	/* formula for margins is: if n number of visible elements then total margins will be (nX2 + 1).
-	* In addition the number of borders will be nx2.
-	* Thus the formula: containing element width = panelWidth*n + (n +1)*m + 2n*b Here m is the margin in px, b is the border width in px.
-	 E.g. If length of margins is 2px, border: 1px and visible elements is 4 and element width = 100, 
-	 container width = 4*100 + (4+1)*2 + 2*4*1 = 419  */
-	</style>
 	<script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
 	<script type="text/javascript" src="js/velocity.min.js"></script>
-    <script src="js/jquery.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script src="js/TweenLite.min.js"></script>
+	<script src="js/slider.js"></script>    
+	<script src="js/mustache.js"></script>
+	<link rel="stylesheet" href="css/slider.css">
 	<link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/font-awesome.min.css">
 </head>
 <body>
     <div class="container" style="width:100%;">
         <div class="row">
-        	<div class="col">
-				<div style="display:flex;width:100%;">
-					<div id="sldr_left" style="z-index:5000;position:relative;"><span style="position:absolute;top:50%;background-color:white;"><i class="icon-chevron-left icon-4" style="font-size:1.5em;vertical-align:middle"></i></span></div>
-					<div id = "sldr" class="slider">
-						<div class="sliderframe">
-							<div id="panel1" class="panel">
-								<img style="max-width: 100%;max-height: 100%;display:block;margin:auto;" src="img/01_FC_2016_04_06_11_43_44.jpg"/>
-							</div>
-							<div id="panel2" class="panel">
-								<img style="max-width: 100%;max-height: 100%;display:block;margin:auto;" src="img/01_FC_001.jpg"/>
-							</div>
-							<div id="panel3" class="panel">
-								<img style="max-width: 100%;max-height: 100%;display:block;margin:auto;" src="img/01_FC_2016_03_05_14_32_56_001.jpg"/>
-							</div>
-							<div id="panel4" class="panel">
-								<img style="max-width: 100%;max-height: 100%;display:block;margin:auto;" src="img/01_FC_Aadim_Manush-000.jpg"/>
-							</div>
-							<div id="panel5" class="panel">
-								<img style="max-width: 100%;max-height: 100%;display:block;margin:auto;" src="img/01_FC_out-00.jpg"/>
-							</div>
-							<div id="panel5" class="panel">
-								<img style="max-width: 100%;max-height: 100%;display:block;margin:auto;" src="img/01_FC_2016_02_11_15_35_53.jpg"/>
-							</div>
-							<div id="panel5" class="panel">
-								<img style="max-width: 100%;max-height: 100%;display:block;margin:auto;" src="img/01_FC_2016_03_19_17_07_18_001.jpg"/>
-							</div>
-						</div>
-					</div>
-					<div id="sldr_right" style="z-index:5000;position:relative;left:-16px;"><div style="position:absolute;top:50%;background-color:white;"><i class="icon-chevron-right icon-4" style="font-size:1.5em;"></i></div></div>
-				</div>
+        	<div id="slcon" class="col">
 			</div>
+		</div>
+		<div class="row">
+        	<div id="slcon2" class="col">
+			</div>		
 		</div>
 	</div>            
 
 
 </body>
-<script>
-var start = null;
-var index = 0;
-var setupData;
-var resizeTimer;
-var mousedrag = false;
-var mouseXStart;
-	$(document).ready(()=>{
-		setupData = initialize();
-		window.onresize = (event)=> {
-			if(!resizeTimer) {
-		  		resizeTimer = setTimeout(()=>{
-		  			resizeTimer = null;
-					setupData = initialize();
-		  		}, 300);
+	<script>
+		$(document).ready(()=>{
+			//json data object.
+			let view = {
+				id:"sldr",
+				"panels":[
+					{src:"img/01_FC_2016_04_06_11_43_44.jpg", desc:"Dushopner raat"},
+					{src:"img/01_FC_001.jpg", desc:"Adventure on Venusport"},
+					{src:"img/01_FC_2016_02_11_15_35_53.jpg", desc:"Akash Pother Aguntuk"},
+					{src:"img/01_FC_2016_03_05_14_32_56_001.jpg", desc:"Akash Barir Raja"},
+					{src:"img/01_FC_2016_03_19_17_07_18_001.jpg", desc:"Bahadur O Cheledhorar Dol"},
+					{src:"img/01_FC_Aadim_Manush-000.jpg", desc:"Aadim Manush"},
+					{src:"img/01_FC_out-00.jpg", desc:"Ajob Desher Bondi"},					
+				]
 			}
-		};
-		$('#sldr_left').on('click', ()=>{
-			slideRightByPanel();			
-		});		
-	
-		$('#sldr_right').on('click', ()=>{
-			slideLeftByPanel();
+			var template = $('#slidertmpl').html();
+			Mustache.parse(template);
+    		let render = Mustache.render(template, view);
+    		$("#slcon").html(render);
+    	    onImgLoad("sldr", ()=>{
+    	    	let slider = new Slider('sldr', 3);
+    			window.onresize = (event)=> {
+    				slider.resize(event);
+    			}
+    	    });    		
+    		view["id"]="sldr2";
+    		render = Mustache.render(template, view);    		
+    		$("#slcon2").html(render);    		
+    	    onImgLoad("sldr2", ()=>{
+    	    	let slider = new Slider('sldr2', 3);
+    			window.onresize = (event)=> {
+    				slider.resize(event);
+    			}
+    	    });    	    
 		});
 		
-		let slide = document.querySelector('#sldr');
-		slide.addEventListener('mousedown', (event)=>{
-			event.preventDefault()
-			mousedrag = true;
-			mouseXStart = event.clientX;
-				
-		}, false);
-		slide.addEventListener('mousemove', (evt)=>{
-			if(mousedrag) {
-				slideOnDrag((evt.clientX - mouseXStart)/10);
-			}
-		}, false);
-		slide.addEventListener('mouseup', ()=>{
-			mousedrag = false;}, false);
-	});
-	
-	function initialize() {
-		setupData = derivePanelSize();
-		$('#sldr .sliderframe .panel').css('width', setupData.panelWidth);
-		let sliderH = Math.ceil(getCSSProperty(document.querySelector('#sldr .sliderframe .panel'), 'height'));
-		$('#sldr').css('height', sliderH);
-
-		let slider =  $('#sldr .sliderframe');
-		setupData['slider']=slider;		
-
-		let cWidth = calculateContainers();
-		$('#sldr .sliderframe').css('width', cWidth);
-		slider.css('left', index*(setupData.panelWidth + setupData.margin))
-		return setupData;
-	}
-
-	function calculateContainers() {
-		let containerWidth = setupData.panelWidth*setupData.size + (setupData.size + 1)*setupData.margin + 2*setupData.size*setupData.borderWidth;
-		return containerWidth
-	}
-
-	function slideLeftByPanel() {
-		let moveBy = setupData.panelWidth + setupData.margin - getSlideOffset();
-		let currentLeft = getCSSProperty(document.querySelector('#sldr .sliderframe'), 'left');		
-		if(currentLeft > setupData.minLeft) {
-			let moveTo = currentLeft - moveBy;
-			if(moveTo < setupData.minLeft) {
-				moveTo = setupData.minLeft;
-			}
-			index = Math.round(moveTo/setupData.panelWidth);
-			setupData.slider.animate({left:moveTo}, 1000);
+		function onImgLoad(id, callBack) {
+    		let contentImages = $("#" + id + " img");
+    	    let totalImages = contentImages.length;
+    	    let loadedImages = 0;
+    	    contentImages.each(()=>{
+    	        $(this).on('load', ()=>{
+    	            loadedImages++;
+    	            if(loadedImages == totalImages) {
+    	            	console.log("invoking slider");
+    	            	callBack();
+    	            }
+    	        });
+    	    });			
 		}
-	}
-	
-	function slideRightByPanel(slider, panelWidth, border, margin) {
-		let moveBy = setupData.panelWidth + setupData.margin - getSlideOffset();
-		let currentLeft = getCSSProperty(document.querySelector('#sldr .sliderframe'), 'left');
-		if(currentLeft < setupData.maxLeft) {
-			let moveTo = currentLeft + moveBy;
-			if(moveTo > setupData.maxLeft) {
-				moveTo = setupData.maxLeft;
-			}
-			index = Math.round(moveTo/setupData.panelWidth);
-			setupData.slider.animate({left:moveTo}, 1000);
-		}
-	}	
-	
-	function getSlideOffset() {
-		let currentPos = getCSSProperty(document.querySelector('#sldr .sliderframe'), 'left');
-		let panelSize = setupData.panelWidth + setupData.margin;
-		return Math.abs(currentPos%panelSize);		
-	}
-	
-	function slideOnDrag(slideAmt) {
-		let currentLeft = getCSSProperty(document.querySelector('#sldr .sliderframe'), 'left');
-		currentLeft += slideAmt;
-		let running = false;
-
-		if(!running && currentLeft < setupData.maxLeft && currentLeft >= setupData.minLeft) {
-			running = true;
-			window.requestAnimationFrame(()=>{
-				setupData.slider.css('left', currentLeft);
-				index = Math.round(currentLeft/setupData.panelWidth);
-				running = false;});
-		}
-	}
-	
-	
-	function parseSize(dim) {
-		dim = new String(dim);
-		dimNum = dim.substring(0,dim.indexOf("px"));
-		return Number(dimNum);
-	}
-	
-	function getCSSProperty(elem, p) {
-		let elemStyle = window.getComputedStyle(elem);
-		let cssProp = elemStyle.getPropertyValue(p);
-		if(cssProp.indexOf("px") >= 0) {
-			return parseSize(cssProp);
-		} else {
-			return cssProp;
-		}
-	}
-	
-	function setup() {
-		//get the top container and get all its attributes.
-		let panel = document.querySelector('#sldr .sliderframe .panel');
-		let panelStyle = window.getComputedStyle(panel);
-		//count the number of panels.
-		let container = document.querySelector('#sldr .sliderframe');
-
-		let panels = container.childNodes;
-		let size = 0;
-		for(let  i = 0; i < panels.length; i++) {
-			if(panels[i].nodeType==1) {
-				++size;		
-			}
-		}
-		let borderWidth = getCSSProperty(panel, 'border-width');
-		let margin = getCSSProperty(panel, 'margin-left');
-		
-		return {"size":size, "borderWidth":borderWidth,
-			"margin":margin}
-	}
-	
-	function derivePanelSize() {
-		let setupData = setup();
-		let panelMinSize = 80;
-		let maxVisible = 5;
-		let minVisible = 1;
-		let border = setupData.borderWidth;
-		let margin = setupData.margin;
-		let visible = maxVisible;
-		//get the current width of the visible div.
-		let vContainerW = Math.floor(getCSSProperty(document.querySelector('#sldr'), 'width'));
-		console.log(vContainerW);
-		//based upon the visible width, calculate the panel size w.r.t minimum panel size and max visible
-		let done = false;
-		let pw = 0;
-		while(!done && visible > 0) {
-				pw = (vContainerW - (visible + 1)*margin)/visible;
-				console.log("pw " + pw);
-				if(pw >= panelMinSize + border*2) {
-					done = true;
-				} else {
-					--visible;
-				}
-		}
-		if(visible == 0) {
-			visible = minVisible;
-		}
-
-		setupData['panelWidth'] = Math.floor(pw);
-		setupData['visible'] = visible;
-		setupData['maxLeft'] = 0;
-		setupData['minLeft'] = -1*(setupData.panelWidth + setupData.margin)*(setupData.size - setupData.visible);
-		return setupData;
-	}
-	
-	/*
-	LEGACY code below.
-	function slide() {
-	
-		let pos = index*(setupData.panelWidth + setupData.margin);
-		setupData.slider.velocity({left:pos}, {duration:200});
-	}
-	function animhorizontalSlide(element, end) {
-		let now = new Date().getTime();
-		let dt = now - (start||now);
-		start = now;
-		let currentLeft = parseSize(element.style.left);
-		console.log("dt " + dt + " left:" + currentLeft);		
-		let progress;
-		if(currentLeft > end) {
-			progress = currentLeft - dt;
-			progress = Math.max(progress, end);
-		} else {
-			progress = currentLeft + dt;
-			progress = Math.min(progress, end);
-
-		}
-		element.style.left=progress + 'px';
-		
-		if(progress != end) {
-			window.requestAnimationFrame((timestamp)=>{
-				animhorizontalSlide(element, end)
-			});
-		} else {
-			start = null;
-		}
-	}*/	
-
-</script>
+	</script>
+	<script id="slidertmpl" type="x-tmpl-mustache">
+		<div class="slider_container">
+			<div id="{{id}}_left" style="z-index:5000;position:relative;"><span class="sliderIcon"><i class="icon-chevron-left icon-4"></i></span></div>
+			<div id = "{{id}}" class="slider">
+				<div class="sliderframe">
+					{{#panels}}						
+						<div class="panel">
+							<figure>
+								<img class="panelimg" src="{{&src}}"/>
+								<figcaption>
+									<div style="font-weight:bold;">{{desc}}</div>
+									<div style="display:flex;justify-content:center;"><button style="background-color:teal;color:white;">Read</button></div>
+								</figcaption>
+							</figure>
+						</div>
+					{{/panels}}
+				</div>
+			</div>
+			<div id="{{id}}_right" style="z-index:5000;position:relative;left:-16px;"><div class="sliderIcon"><i class="icon-chevron-right icon-4"></i></div></div>
+		</div>
+	</script>	
 </html>
-
